@@ -3,7 +3,7 @@
 import threading
 # from server import STATE_UPDATE_INTERVAL, AgentState
 from .agent_state import *
-from common import event_manager, EVENT_HEARTBEAT
+from common import event_manager, CommonEvent
 
 
 def singleton(cls):
@@ -26,8 +26,8 @@ class AgentStateMonitor(object):
         self.agent_state_dict = dict()
         self.__running = threading.Event()
         self.__state_monitor_thread = threading.Thread(target=self.__agents_state_monitor)
-
-        event_manager.add_event_listener(EVENT_HEARTBEAT, self.add_new_agent_state)
+        agent_event = CommonEvent()
+        event_manager.add_event_listener(agent_event.EVENT_HEARTBEAT, self.add_new_agent_state)
 
     def add_new_agent_state(self, event):
         state_data = event.dict
