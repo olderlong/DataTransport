@@ -6,14 +6,24 @@
 # # from data_transport.cc_server import EVENT_HEARTBEAT
 import time
 import threading
-from agent import CCAgent
+from agent import CCAgent, AppScanControl
 from common import event_manager
 from server import CCServer, AgentStateMonitor
 
 
 def send_command(server, json_msg):
-    for index in range(30):
-        server.send_command(json_msg)
+    command = {
+        "Type":"WVSCommand",
+        "Data":{
+            "Action": "StartNewScan",
+            "Config": { # 可选，当命令为StartNewScan时需提供该字段作为扫描参数
+                "StartURL": "http://www.cnblog.com",
+                "ScanPolicy": "Normal"
+            }
+        }
+    }
+    for index in range(3):
+        server.send_command(command)
         # agent.send_json_to(json_msg, server.address)
         # time.sleep(0.5)
         # server.send_msg_to("Hello world# {} ".format(index), agent.address)
@@ -28,15 +38,16 @@ if __name__ == '__main__':
     agent.start()
     # ll = Listener("aa")
 
-    event_manager.start()
+    # event_manager.start()
     agent_state_monitor = AgentStateMonitor()
     agent_state_monitor.start_monitor()
 
     # event_manager.Start()
     # agent.start_heartbeat(2)
 
-    agent_1 = CCAgent(cc_server_address=server.address, port=5556, name="Agent_2")
-    agent_1.start()
+    # agent_1 = CCAgent(cc_server_address=server.address, port=5556, name="Agent_2")
+    # agent_1.start()
+    appscan = AppScanControl()
     # agent_1.start_heartbeat(2)
 
     th = threading.Thread(target=send_command, args=(server, json_msg))
@@ -51,7 +62,7 @@ if __name__ == '__main__':
     time.sleep(60)
 
 
-    agent_1.stop()
+    # agent_1.stop()
     # agent.stop()
     server.stop()
     agent_state_monitor.stop_monitor()
