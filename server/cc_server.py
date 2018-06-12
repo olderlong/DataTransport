@@ -7,9 +7,10 @@ from .agent_state_manager import AgentStateMonitor
 
 
 class CCServer(UDPEndPoint):
-    def __init__(self, port=8888):
+    def __init__(self, port=6666):
         self.agent_list = []
         self.agent_state_monitor = AgentStateMonitor()
+        event_manager.add_event_listener(agent_event.EVENT_SERVER_COMMAND, self.send_command)
         super(CCServer, self).__init__(port=port, handler=self.receive_data_handler)
 
     def receive_data_handler(self, data, address):
@@ -36,10 +37,12 @@ class CCServer(UDPEndPoint):
         except KeyError as e:
             print("收到来自{}的未知类型数据——{}".format(address, data))
 
-    def send_command(self, command_json):
+    def send_command(self, event):
+        command_json = event.dict
         for address in self.agent_list:
             identifier = "[{}:{}]".format(address[0], address[1])
             if identifier in list(self.agent_state_monitor.agent_state_dict.keys()):
+                # print("in CCServer " + str(command_json))
                 self.send_json_to(command_json, address)
 
     def send_config(self, config_json):

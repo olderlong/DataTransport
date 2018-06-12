@@ -75,7 +75,7 @@ class AgentStateMonitor(object):
         :return: 代理状态：Offline、Dead、Online
         """
         last_time = time.time() - agent_state.timestamp
-        if STATE_UPDATE_INTERVAL * 2.0 and last_time < last_time <= STATE_UPDATE_INTERVAL * 5.0:
+        if STATE_UPDATE_INTERVAL * 2.0 < last_time <= STATE_UPDATE_INTERVAL * 5.0:
             return "Offline"
         elif last_time > STATE_UPDATE_INTERVAL * 5.0:
             return "Dead"
