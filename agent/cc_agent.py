@@ -2,7 +2,8 @@
 # _*_ coding:utf-8 _*_
 import time
 import threading
-from common import UDPEndPoint
+import json
+from common import UDPEndPoint, event_manager, agent_event
 from server import STATE_UPDATE_INTERVAL
 
 
@@ -19,10 +20,22 @@ class CCAgent(UDPEndPoint):
         if self.cc_server is None:
             self.cc_server = address
 
-        self.print_recv_data(data, address)
-
-    def print_recv_data(self, data, address):
-        print("%s收到来自%s的数据-----%s" % (self.agent_name, address, data.decode()))
+        pkg_obj = dict(json.loads(str(data, encoding='utf-8')))
+        #针对Data中字段进行分析处理
+        try:
+            if pkg_obj["Type"] == "WVSCommand":  #命令数据包
+                data = pkg_obj["Data"]
+                agent_event.event_wvs_command.dict = data
+                event_manager.send_event(agent_event.event_wvs_command)
+            elif pkg_obj["Type"] == "AgentControl":
+                data = pkg_obj["Data"]
+                if data["Control"] == "Exit":
+                    agent_event.event_agent_exit.dict = data
+                    event_manager.send_event(agent_event.event_agent_exit)
+            else:
+                print("收到来自{}的未知类型数据".format(address))
+        except KeyError as e:
+            print("收到来自{}的未知类型数据——{}".format(address, data))
 
     def send_state(self, state_json):
         self.send_json_to(state_json,  self.cc_server)
@@ -41,9 +54,7 @@ class CCAgent(UDPEndPoint):
         self.__heartbeat_thread.start()
 
     def stop(self):
-        # self.udp_socket.shutdown(2)
-        # print(self.udp_socket.getsockname())
-        # print(self.udp_socket.fileno())
+        # event_manager.stop()
         self.__is_heartbeat_thread_running.clear()
         super(CCAgent, self).stop()
 

@@ -4,17 +4,13 @@ from agent import WVSControlBase
 
 class AppScanControl(WVSControlBase):
     def __init__(self):
-        agent_event = CommonEvent()
-        event_manager.add_event_listener(agent_event.event_wvs_command, self.wvs_command_handler)
 
-        self.wvs_action = "StartNewScan"
-
-    def wvs_command_handler(self, event):
-        command = event.dict
-        print(str(command))
+        super(AppScanControl, self).__init__()
 
     def start_new_scan(self, config):
-        pass
+        start_url = config["StartURL"]
+        scan_policy = config["ScanPolicy"]
+        print("Start a scan to website <{}> with a policy <{}>".format(start_url, scan_policy))
 
     def stop_scan(self):
-        pass
+        print("stop")

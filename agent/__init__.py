@@ -3,6 +3,7 @@
 
 from .cc_agent import CCAgent
 from .wvs_control_base import WVSControlBase
+from .app_scan_control import AppScanControl
 
 
-__all__ = ["CCAgent", "WVSControlBase"]
+__all__ = ["CCAgent", "WVSControlBase", "AppScanControl"]

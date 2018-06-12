@@ -1,23 +1,45 @@
 #! /usr/bin/env python
 # _*_ coding:utf-8 _*_
 
-from common import CommonEvent, event_manager
+from common import event_manager, agent_event
 
 
 class WVSControlBase(object):
     def __init__(self):
-        agent_event = CommonEvent()
-        event_manager.add_event_listener(agent_event.event_wvs_command, self.wvs_command_handler)
+        event_manager.add_event_listener(agent_event.EVENT_WVS_COMMAND, self.wvs_command_handler)
 
         self.wvs_action = "StartNewScan"
         self.scan_config = {}
 
     def wvs_command_handler(self, event):
-        command_pkg = event.dict
-        print(str(command_pkg))
+        """
+        wvs 控制命令处理
+        命令格式：
+        command = {
+            "Action": "Operation",
+            "Config": {}    #可选，当命令为StartNewScan时需提供该字段作为扫描参数
+            }
+        :param event: WVS控制命令事件
+        :return:
+        """
+        command_data = event.dict
+        try:
+            self.wvs_action = command_data["Action"]
+            if self.wvs_action == "StartNewScan":
+                self.scan_config = command_data["Config"]
+                self.start_new_scan(self.scan_config)
+            elif self.wvs_action == "StopScan":
+                self.stop_scan()
+            else:
+                self.other_action(command_data)
+        except KeyError as e:
+            pass
 
     def start_new_scan(self, config):
         pass
 
     def stop_scan(self):
+        pass
+
+    def other_action(self, command):
         pass
