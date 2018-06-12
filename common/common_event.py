@@ -26,3 +26,8 @@ class CommonEvent(object):
 
         self.EVENT_WVS_COMMAND = "WVSCommand"
         self.event_wvs_command = Event(type_=self.EVENT_WVS_COMMAND)
+
+        self.EVENT_SERVER_COMMAND = "ServerCommand"
+        self.event_server_command = Event(type_=self.EVENT_SERVER_COMMAND)
+        self.EVENT_AGENT_EXIT = "AgentExit"
+        self.event_agent_exit = Event(type_=self.EVENT_AGENT_EXIT)

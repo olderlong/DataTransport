@@ -6,5 +6,6 @@ from .udp_endpoint import UDPEndPoint
 from .common_event import CommonEvent
 
 agent_event = CommonEvent()
+event_manager.start()
 
 __all__ = ["Event", "EventManager", "UDPEndPoint", "event_manager","CommonEvent", "agent_event"]
