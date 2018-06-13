@@ -4,6 +4,11 @@ import os
 import shutil
 import logging
 import subprocess
+try:
+    import xml.etree.cElementTree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET
+
 from agent import WVSControlBase
 
 logger = logging.getLogger("Agent")
@@ -22,17 +27,17 @@ class AppScanControl(WVSControlBase):
         :param config:
         :return:
         """
-        self.start_url = config["StartURL"]
+        self.start_urls = config["StartURL"]
         scan_policy = config["ScanPolicy"]
-        logger.info("Start a scan to website <{}> with a policy <{}>".format(self.start_url, scan_policy))
-        self.__create_scan_project_dir(self.start_url)
+        logger.info("Start a scan to website <{}> with a policy <{}>".format(self.start_urls, scan_policy))
+        self.__create_scan_project_dir(self.start_urls)
 
         self.__init_scan_config()
 
         self.appscan_shell_cmd = "{} /e /st {} /su {} /d {} /rt xml /rf {}".format(
             self.appscan_path,
             self.scan_template_file,
-            self.start_url,
+            self.start_urls,
             self.scan_result_file,
             self.scan_result_xml_file
         )
@@ -66,7 +71,29 @@ class AppScanControl(WVSControlBase):
         根据配置信息，修改扫描模板文件
         :return:
         """
-        pass
+        try:
+            tree = ET.ElementTree(self.scan_template_file)
+
+            starting_urls_node = tree.find("Application/StartingUrls")
+            old_starting_url_nodes = tree.findall("Application/StartingUrls/StartingUrl")
+
+            # 删除原有URL
+            for node in old_starting_url_nodes:
+                starting_urls_node.remove(node)
+
+            if type(self.start_urls)==type(list()):
+                for url in self.start_urls:
+                    starting_url_node = ET.Element("StartingUrl")
+                    starting_url_node.text = url
+                    starting_urls_node.append(starting_url_node)
+            else:
+                starting_url_node = ET.Element("StartingUrl")
+                starting_url_node.text = self.start_urls
+                starting_urls_node.append(starting_url_node)
+
+            tree.write(self.scan_template_file)
+        except Exception as e:
+            logging.error(e)
 
     def __create_scan_project_dir(self, start_url):
         hostname = start_url.split("//")[1].split("/")[0]
