@@ -20,18 +20,19 @@ class CCServer(UDPEndPoint):
         pkg_obj = dict(json.loads(str(data, encoding='utf-8')))
         try:
             if pkg_obj["Type"] == "Heartbeat":  #心跳包
-                data = pkg_obj["Data"]
-
-                agent_event.event_heartbeat.dict = data
+                agent_event.event_heartbeat.dict = pkg_obj["Data"]
                 event_manager.send_event(agent_event.event_heartbeat)
 
                 # self.heartbeat_handle(data)
             elif pkg_obj["Type"] == "WVSState":
-                agent_event.event_wvs_state.dict = pkg_obj["WVSState"]
-                print("收到代理{}的漏扫状态数据".format(address))
+                agent_event.event_wvs_state.dict = pkg_obj["Data"]
+                event_manager.send_event(agent_event.event_wvs_state)
+                # print("收到代理{}的漏扫状态数据".format(address))
 
             elif pkg_obj["Type"] == "ScanResult":
-                print("收到代理{}的漏扫结果数据".format(address))
+                agent_event.event_scan_result.dict = pkg_obj["Data"]
+                event_manager.send_event(agent_event.event_scan_result)
+                # print("收到代理{}的漏扫结果数据".format(address))
             else:
                 print("收到来自{}的未知类型数据".format(address))
         except KeyError as e:
