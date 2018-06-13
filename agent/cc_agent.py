@@ -3,8 +3,11 @@
 import time
 import threading
 import json
+import logging
 from common import UDPEndPoint, event_manager, agent_event
 from server import STATE_UPDATE_INTERVAL
+
+logger = logging.getLogger("Agent")
 
 
 class CCAgent(UDPEndPoint):
@@ -33,9 +36,9 @@ class CCAgent(UDPEndPoint):
                     agent_event.event_agent_exit.dict = data
                     event_manager.send_event(agent_event.event_agent_exit)
             else:
-                print("收到来自{}的未知类型数据".format(address))
+                logger.info("收到来自{}的未知类型数据".format(address))
         except KeyError as e:
-            print("收到来自{}的未知类型数据——{}".format(address, data))
+            logger.error("收到来自{}的未知类型数据——{}".format(address, data))
 
     def send_state(self, state_json):
         self.send_json_to(state_json,  self.cc_server)
