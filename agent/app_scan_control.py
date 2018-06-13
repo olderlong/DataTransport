@@ -72,7 +72,7 @@ class AppScanControl(WVSControlBase):
         :return:
         """
         try:
-            tree = ET.ElementTree(self.scan_template_file)
+            tree = ET.ElementTree(file=self.scan_template_file)
 
             starting_urls_node = tree.find("Application/StartingUrls")
             old_starting_url_nodes = tree.findall("Application/StartingUrls/StartingUrl")
@@ -82,23 +82,26 @@ class AppScanControl(WVSControlBase):
                 starting_urls_node.remove(node)
 
             if type(self.start_urls)==type(list()):
+                logger.info("扫描多个链接")
                 for url in self.start_urls:
                     starting_url_node = ET.Element("StartingUrl")
                     starting_url_node.text = url
                     starting_urls_node.append(starting_url_node)
             else:
+                logger.info("扫描单个链接")
                 starting_url_node = ET.Element("StartingUrl")
                 starting_url_node.text = self.start_urls
                 starting_urls_node.append(starting_url_node)
 
             tree.write(self.scan_template_file)
         except Exception as e:
-            logging.error(e)
+            logger.error(e)
 
     def __create_scan_project_dir(self, start_url):
         hostname = start_url.split("//")[1].split("/")[0]
         self.current_dir = os.getcwd()
-        self.scan_project_dir = os.path.join(self.current_dir, "scan_project", hostname)
+
+        self.scan_project_dir = os.path.join(self.current_dir, "scan_project", hostname) # 该方法针对单链接有效
         if not os.path.exists(self.scan_project_dir):
             os.makedirs(self.scan_project_dir)
             logger.info("扫描项目目录>>{}\t创建成功".format(self.scan_project_dir))
