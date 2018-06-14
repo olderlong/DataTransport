@@ -4,15 +4,17 @@ import os
 import shutil
 import logging
 import subprocess
+import time
 try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
-
+from common import event_manager, agent_event
 from agent import WVSControlBase
 
 logger = logging.getLogger("Agent")
 
+APPSCAN_RETCODE=["成功完成", "启动失败", "命令行错误", "许可证无效", "装入失败", "扫描失败", "报告失败", "保存失败", "常见错误"]
 
 class AppScanControl(WVSControlBase):
     def __init__(self):
@@ -34,13 +36,20 @@ class AppScanControl(WVSControlBase):
 
         self.__init_scan_config()
 
-        self.appscan_shell_cmd = "{} /e /st {} /su {} /d {} /rt xml /rf {}".format(
+        self.appscan_shell_cmd = "{} /e /st {} /d {} /rt xml /rf {}".format(
             self.appscan_path,
             self.scan_template_file,
-            self.start_urls,
             self.scan_result_file,
             self.scan_result_xml_file
         )
+
+        # self.appscan_shell_cmd = "{} /e /st {} /su {} /d {} /rt xml /rf {}".format(
+        #     self.appscan_path,
+        #     self.scan_template_file,
+        #     self.start_urls,
+        #     self.scan_result_file,
+        #     self.scan_result_xml_file
+        # )
         logger.info("Appscan shell command is: {}".format(self.appscan_shell_cmd))
         # for debug
         self.appscan_shell_cmd = "ping -n 15 www.baidu.com"
@@ -59,11 +68,86 @@ class AppScanControl(WVSControlBase):
             line_str = line_str.strip()
             if line_str:
                 print("Appscan扫描进程输出：{}".format(line_str))
+            # time.sleep(0.1)
 
         if self.appscan_process.returncode == 0:
             logger.info("Appscan扫描进程成功结束")
+            self.__process_scan_result()
         else:
-            logger.error("Appscan扫描进程运行失败：{}".format(self.appscan_process.returncode))
+            logger.error("Appscan {}".format(APPSCAN_RETCODE[self.appscan_process.returncode]))
+
+    def __process_scan_result(self):
+        res_list = self.__gen_scan_result()
+        if res_list:
+            for res in res_list:
+                result = {
+                    "Type": "ScanResult",
+                    "Data": res
+                }
+                agent_event.event_scan_result_send.dict = result
+                event_manager.send_event(agent_event.event_scan_result_send)
+                time.sleep(0.1)
+
+                # self.__print_scan_result(res)
+
+    def __print_scan_result(self, vul_result):
+        result_str = "漏洞类型:\t{}\n漏洞URL:\t{}\n漏洞等级:\t{}\n漏洞信息:\t".format(
+            vul_result["VulType"],
+            vul_result["VulUrl"],
+            vul_result["VulSeverity"]
+        )
+        print(result_str)
+        for info in vul_result["VulDetails"]:
+            result_str = "\tURL参数变异:\t{}\n\t漏洞原因:\t{}\n\tCWE:\t{}\n\tCVE:\t{}".format(
+                info["url_param_variant"],
+                info["vul_reasoning"],
+                info["CWE"],
+                info["CVE"]
+            )
+            print(result_str)
+        print("\r\n")
+
+    def __gen_scan_result(self):
+        try:
+            vul_result_list = []
+            tree = ET.ElementTree(file=self.scan_result_xml_file)
+            issue_list_nodes = tree.findall("Results/Issues/Issue")
+            # print(len(issue_list_nodes))
+
+            for issue_node in issue_list_nodes:
+                vul_type_ID = issue_node.attrib["IssueTypeID"]
+                vul_url = issue_node.find("Url").text
+                vul_severity = issue_node.find("Severity").text
+                vul_details = []
+                cwe_list = []
+                cve_list = []
+                vul_info_nodes = issue_node.findall("Variant")
+                for info_node in vul_info_nodes:
+                    url_param_variant = info_node.find("Difference").text
+                    vul_reasoning = info_node.find("Reasoning").text
+                    cwe = info_node.find("CWE").text
+                    cve = info_node.find("CVE").text
+                    vul_info = {
+                        "url_param_variant": url_param_variant,
+                        "vul_reasoning": vul_reasoning,
+                        "CWE": cwe,
+                        "CVE": cve
+                    }
+                    vul_details.append(vul_info)
+                vul_result = {
+                    "VulType": vul_type_ID,
+                    "VulUrl": vul_url,
+                    "VulSeverity": vul_severity,
+                    "VulDetails": vul_details
+                }
+
+
+
+                vul_result_list.append(vul_result)
+            return vul_result_list
+        except Exception as e:
+            print(e)
+            return None
 
 
     def __init_scan_config(self):
@@ -114,7 +198,8 @@ class AppScanControl(WVSControlBase):
 
         self.scan_result_xml_file = os.path.join(self.scan_project_dir, "result.xml")
         if os.path.exists(self.scan_result_xml_file):
-            os.remove(self.scan_result_xml_file)
+            # os.remove(self.scan_result_xml_file)
+            pass
 
         self.scan_template_file = os.path.join(self.scan_project_dir, "base.scant")
         if os.path.exists(self.scan_template_file):
