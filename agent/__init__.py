@@ -4,6 +4,7 @@
 import logging
 import time
 import sys
+import os
 
 from .cc_agent import CCAgent
 from .wvs_control_base import WVSControlBase
@@ -15,7 +16,8 @@ def __init_logger(name):
     logger.setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s >>> %(message)s')
     # 文件日志
-    file_handler = logging.FileHandler("{}.log".format(time.time()))
+    app_path = os.getcwd()
+    file_handler = logging.FileHandler(os.path.join(app_path,"log/{}.log".format(time.time())))
     file_handler.setFormatter(formatter)  # 可以通过setFormatter指定输出格式
 
     # 控制台日志
