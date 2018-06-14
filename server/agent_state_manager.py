@@ -23,6 +23,7 @@ class AgentStateMonitor(object):
     代理状态监视类，为单例模式
     """
     def __init__(self):
+        self.lock = threading.Lock() # 引入锁
         self.agent_state_dict = dict()
         self.__running = threading.Event()
         self.__state_monitor_thread = threading.Thread(target=self.__agents_state_monitor)
@@ -30,11 +31,14 @@ class AgentStateMonitor(object):
         event_manager.add_event_listener(agent_event.EVENT_HEARTBEAT, self.add_new_agent_state)
 
     def add_new_agent_state(self, event):
+
         state_data = event.dict
         agent_state = AgentState()
         agent_state.gen_from_json_obj(state_data)
         # self.update_agent_state(agent_state)
+        self.lock.acquire()
         self.agent_state_dict[agent_state.agent_identifier] = agent_state
+        self.lock.release()
 
     def update_agent_state(self, agent_state):
         self.agent_state_dict[agent_state.agent_identifier] = agent_state
@@ -52,20 +56,23 @@ class AgentStateMonitor(object):
     def __agents_state_monitor(self):
         while self.__running:
             if len(self.agent_state_dict) > 0:
+                self.lock.acquire()
                 for agent_state in list(self.agent_state_dict.values()):
+                    # agent_state.print_state()
                     new_state = self.__check_state(agent_state)
                     if new_state == "Dead":
                         print("Agent {0} is dead.\nAgent {1} is removed.".format(
                             agent_state.agent_identifier,
                             agent_state.agent_identifier))
 
-                        self.agent_state_dict.pop(agent_state.agent_identifier)
+                        # self.agent_state_dict.pop(agent_state.agent_identifier)
                     else:
                         agent_state.state = new_state
+                        agent_state.timestamp = time.time() #更新状态的时标
                         agent_state.print_state()
                         self.agent_state_dict[agent_state.agent_identifier] = agent_state
-                        # self.update_agent_state(agent_state)
 
+                self.lock.release()
             time.sleep(5)
 
     def __check_state(self, agent_state):
