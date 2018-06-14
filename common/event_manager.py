@@ -34,7 +34,7 @@ class EventManager:
         while self.__active:
             try:
                 # 获取事件的阻塞时间设为1秒
-                event = self.__eventQueue.get(block=True, timeout=0.1)
+                event = self.__eventQueue.get(block=True, timeout=0.05)
                 self.___event_process(event)
             except Empty:
                 pass
