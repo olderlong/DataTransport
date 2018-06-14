@@ -19,10 +19,12 @@ class CommonEvent(object):
     def __init__(self):
         self.EVENT_HEARTBEAT = "Heartbeat"
         self.event_heartbeat = Event(type_=self.EVENT_HEARTBEAT)
-        self.EVENT_WVS_STATE = "WVSState"
-        self.event_wvs_state = Event(type_=self.EVENT_WVS_STATE)
-        self.EVENT_WVS_RESULT = "ScanResult"
-        self.event_scan_result = Event(type_=self.EVENT_WVS_RESULT)
+
+        self.EVENT_WVS_STATE_RECV = "WVSStateRecv"
+        self.event_wvs_state_recv = Event(type_=self.EVENT_WVS_STATE_RECV)
+
+        self.EVENT_WVS_RESULT_RECV = "ScanResultRecv"
+        self.event_scan_result_recv = Event(type_=self.EVENT_WVS_RESULT_RECV)
 
         self.EVENT_WVS_COMMAND = "WVSCommand"
         self.event_wvs_command = Event(type_=self.EVENT_WVS_COMMAND)
@@ -31,3 +33,7 @@ class CommonEvent(object):
         self.event_server_command = Event(type_=self.EVENT_SERVER_COMMAND)
         self.EVENT_AGENT_EXIT = "AgentExit"
         self.event_agent_exit = Event(type_=self.EVENT_AGENT_EXIT)
+
+        self.EVENT_SCAN_RESULT_SEND = "SendResultSend"
+        self.event_scan_result_send = Event(type_=self.EVENT_SCAN_RESULT_SEND)
+
