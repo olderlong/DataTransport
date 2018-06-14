@@ -34,7 +34,7 @@ def command_start_scan(server, command_json):
         # print("in run_server " + str(agent_event.event_wvs_command.dict))
         event_manager.send_event(agent_event.event_server_command)
         time.sleep(3)
-    command_exit_agent(exit_agent)
+    # command_exit_agent(exit_agent)
 
 
 def command_exit_agent(command_json):
