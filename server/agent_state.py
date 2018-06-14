@@ -32,7 +32,7 @@ class AgentState(object):
         self.state = state
 
     def print_state(self):
-        print("Agent {}{} is {} at {}".format(self.name, self.agent_identifier, self.state, self.timestamp))
+        print("Agent {}{} is {} at {}".format(self.name, self.agent_identifier, self.state, time.time()))
 
 
 
